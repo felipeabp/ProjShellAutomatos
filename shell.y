@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 extern int yylex();
 extern int yyparse();
@@ -11,15 +12,16 @@ void yyerror(const char* s);
 %}
 
 %union {
-	int ival;
+	int integer;
+	char string;
 }
 
-%token T_LS T_LEFT T_RIGHT
-%token T_PS T_INVALIDO
+%token <integer> T_NUM
+%token <string> T_ARG
+%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR
 %token T_NEWLINE T_QUIT
-%left T_LS T_MINUS
 
-%type<ival> expression
+%type<string> comando
 
 %start inicio
 
@@ -30,17 +32,31 @@ inicio:
 ;
 
 line: T_NEWLINE
-    | expression T_NEWLINE {} 
+    | comando T_NEWLINE {} 
     | T_QUIT T_NEWLINE { printf("Fim!\n"); exit(0); }
 ;
 
-expression: T_LS { $$ = system("/bin/ls"); }
-;
-
-expression: T_PS { $$ = system("/bin/ps"); }
-;
-
-expression: T_INVALIDO { printf("Comando invalido!\n");}
+comando: T_LS { $$ = system("/bin/ls"); }
+	   | T_PS { $$ = system("/bin/ps"); }
+	   | T_KILL T_NUM {  char string[100], stringfinal[1000] = "/bin/kill ";
+ 	   					 int i, rem, len = 0, n;
+					     n = $2;
+					     while (n != 0)
+					     {
+					         len++;
+					         n /= 10;
+					     }
+					     for (i = 0; i < len; i++)
+					     {
+					         rem = $2 % 10;
+					         $2 = $2 / 10;
+					         string[len - (i + 1)] = rem + '0';
+					     }
+					     string[len] = '\0';
+					     strcat(stringfinal, string);
+					     $$ = system(stringfinal); 
+	   				 }
+	   | T_MKDIR T_ARG { printf("TODO");}
 ;
 
 %%
@@ -57,5 +73,5 @@ int main() {
 
 void yyerror(const char* s) {
 	fprintf(stderr, "Parse error: %s\n", s);
-	exit(1);
 }
+

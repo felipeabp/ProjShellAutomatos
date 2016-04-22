@@ -12,8 +12,10 @@
 \n		{return T_NEWLINE;}
 "ls"		{return T_LS;}
 "ps"		{return T_PS;}
-"exit"		{return T_QUIT;}
+"kill"		{return T_KILL;}
 "quit"		{return T_QUIT;}
-[a-zA-Z0-9]+ {return T_INVALIDO;}
+"mkdir"		{return T_MKDIR;}
+[0-9]+		{yylval.integer = atoi(yytext); return T_NUM;}
+[a-zA-Z0-9]+ {return T_ARG; }
 %%
  
