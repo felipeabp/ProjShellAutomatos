@@ -26,7 +26,7 @@ void yyerror(const char* s);
 %%
 
 inicio: 
-	   | inicio line
+	   | inicio line 
 ;
 
 line: T_NEWLINE
