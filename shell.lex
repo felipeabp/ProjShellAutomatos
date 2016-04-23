@@ -15,7 +15,10 @@
 "kill"		{return T_KILL;}
 "quit"		{return T_QUIT;}
 "mkdir"		{return T_MKDIR;}
+"rmdir"		{return T_RMDIR;}
+"cd"		{return T_CD;}
 [0-9]+		{yylval.integer = atoi(yytext); return T_NUM;}
-[a-zA-Z0-9]+ {return T_ARG; }
+[a-zA-Z0-9]+ 	{yylval.stringp = yytext; return T_ARG; }
+[a-zA-Z0-9./]+ 	{yylval.stringp = yytext; return T_FOLDERARG; }
 %%
  

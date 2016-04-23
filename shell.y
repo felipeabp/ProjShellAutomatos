@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 extern int yylex();
 extern int yyparse();
@@ -14,12 +15,13 @@ void yyerror(const char* s);
 %union {
 	int integer;
 	char string;
+	char * stringp;
 }
 
 %token <integer> T_NUM
-%token <string> T_ARG
-%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR
-%token T_NEWLINE T_QUIT
+%token <stringp> T_ARG
+%token <stringp> T_FOLDERARG
+%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD
 
 %type<string> comando
 
@@ -56,7 +58,33 @@ comando: T_LS { $$ = system("/bin/ls"); }
 					     strcat(stringfinal, string);
 					     $$ = system(stringfinal); 
 	   				 }
-	   | T_MKDIR T_ARG { printf("TODO");}
+	   | T_MKDIR T_ARG {
+	   					char string[100], stringfinal[1000] = "/bin/mkdir ";
+	   					strcat(stringfinal, $2);
+	   					$$ = system(stringfinal);
+	   				   }
+	   | T_RMDIR T_ARG {
+	   					char string[100], stringfinal[1000] = "/bin/rmdir ";
+	   					strcat(stringfinal, $2);
+	   					$$ = system(stringfinal);
+	   				   }
+	   | T_CD T_FOLDERARG {
+						   	int ret = chdir($2);
+						   	if(ret != 0){
+						   		printf("Erro! Diretorio nao encontrado!\n");
+						   	}
+						  }
+	   | T_CD T_ARG {		
+	   					int ret;
+	   					char path[2048];
+	   					getcwd(path, sizeof(path));
+	   					strcat(path, "/");
+	   					strcat(path, $2);
+						ret = chdir(path);
+						if(ret != 0){
+							printf("Erro! Diretorio nao encontrado!\n");
+						}
+					}
 ;
 
 %%
