@@ -20,8 +20,9 @@ void yyerror(const char* s);
 
 %token <integer> T_NUM
 %token <stringp> T_ARG
+%token <stringp> T_ARCARG
 %token <stringp> T_FOLDERARG
-%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD
+%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD T_TOUCH T_IFCONFIG
 
 %type<string> comando
 
@@ -85,6 +86,19 @@ comando: T_LS { $$ = system("/bin/ls"); }
 							printf("Erro! Diretorio nao encontrado!\n");
 						}
 					}
+		| T_TOUCH T_ARCARG {
+							char string[100], stringfinal[1000] = "/bin/touch ";
+							strcat(stringfinal, $2);
+							$$ = system(stringfinal);
+						   }
+		| T_TOUCH T_ARG {
+							char string[100], stringfinal[1000] = "/bin/touch ";
+							strcat(stringfinal, $2);
+							$$ = system(stringfinal);
+						}
+		| T_IFCONFIG {
+						system("ifconfig");
+					 }
 ;
 
 %%
