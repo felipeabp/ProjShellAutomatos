@@ -34,8 +34,22 @@ inicio:
 	   | inicio line 
 ;
 
-line: T_NEWLINE
-    | comando T_NEWLINE {} 
+line: T_NEWLINE { 	
+					char completo[4096] = "myShell:";
+					char path[2048];
+	   				getcwd(path, sizeof(path));
+	   				strcat(completo,path);
+	   				strcat(completo,">> ");
+					printf("%s",completo);
+				}
+    | comando T_NEWLINE  { 
+							char completo[4096] = "myShell:";
+							char path[2048];
+			   				getcwd(path, sizeof(path));
+			   				strcat(completo,path);
+			   				strcat(completo,">> ");
+							printf("%s",completo);
+    					 }
     | T_QUIT T_NEWLINE { printf("Fim!\n"); exit(0); }
 ;
 
@@ -105,6 +119,13 @@ comando: T_LS { $$ = system("/bin/ls"); }
 
 int main() {
 	yyin = stdin;
+	
+	char completo[4096] = "myShell:";
+	char path[2048];
+	getcwd(path, sizeof(path));
+	strcat(completo,path);
+	strcat(completo,">> ");
+	printf("%s",completo);
 
 	do { 
 		yyparse();
