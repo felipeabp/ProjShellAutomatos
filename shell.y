@@ -10,21 +10,38 @@ extern int yyparse();
 extern FILE* yyin;
 
 void yyerror(const char* s);
+
+void printLinha(){
+	char completo[4096] = "FelipeShell:";
+	char path[2048];
+	getcwd(path, sizeof(path));
+	strcat(completo,path);
+	strcat(completo,">> ");
+	printf("%s",completo); 
+}
+
 %}
 
 %union {
 	int integer;
+	float pfloat;
 	char string;
 	char * stringp;
 }
 
+%token <pfloat> T_NUMF
 %token <integer> T_NUM
 %token <stringp> T_ARG
 %token <stringp> T_ARCARG
 %token <stringp> T_FOLDERARG
-%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD T_TOUCH T_IFCONFIG
+%token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD T_TOUCH T_IFCONFIG T_START
+
+%token T_SOMA T_SUBT T_MULT T_DIV
+%left T_SOMA T_SUBT T_MULT T_DIV
 
 %type<string> comando
+%type<integer> calcint
+%type<pfloat> calcfloat
 
 %start inicio
 
@@ -34,28 +51,23 @@ inicio:
 	   | inicio line 
 ;
 
-line: T_NEWLINE { 	
-					char completo[4096] = "myShell:";
-					char path[2048];
-	   				getcwd(path, sizeof(path));
-	   				strcat(completo,path);
-	   				strcat(completo,">> ");
-					printf("%s",completo);
-				}
-    | comando T_NEWLINE  { 
-							char completo[4096] = "myShell:";
-							char path[2048];
-			   				getcwd(path, sizeof(path));
-			   				strcat(completo,path);
-			   				strcat(completo,">> ");
-							printf("%s",completo);
-    					 }
+line: T_NEWLINE { printLinha(); }
+    | comando T_NEWLINE  { printLinha(); }
+    | calcint T_NEWLINE { 	
+    						printf("Resultado: %i\n", $1);
+    						printLinha();
+    					}
+    | calcfloat T_NEWLINE { 
+    						printf("Resultado: %f\n", $1);
+							printLinha();
+    					  }
     | T_QUIT T_NEWLINE { printf("Fim!\n"); exit(0); }
 ;
 
-comando: T_LS { $$ = system("/bin/ls"); }
-	   | T_PS { $$ = system("/bin/ps"); }
-	   | T_KILL T_NUM {  char string[100], stringfinal[1000] = "/bin/kill ";
+comando: T_LS { system("/bin/ls"); }
+	   | T_PS { system("/bin/ps"); }
+	   | T_KILL T_NUM {  
+	   					 char string[100], stringfinal[1000] = "/bin/kill ";
  	   					 int i, rem, len = 0, n;
 					     n = $2;
 					     while (n != 0)
@@ -71,17 +83,17 @@ comando: T_LS { $$ = system("/bin/ls"); }
 					     }
 					     string[len] = '\0';
 					     strcat(stringfinal, string);
-					     $$ = system(stringfinal); 
+					     system(stringfinal); 
 	   				 }
 	   | T_MKDIR T_ARG {
-	   					char string[100], stringfinal[1000] = "/bin/mkdir ";
-	   					strcat(stringfinal, $2);
-	   					$$ = system(stringfinal);
+	   					 char stringfinal[1000] = "/bin/mkdir ";
+	   					 strcat(stringfinal, $2);
+	   					 system(stringfinal);
 	   				   }
 	   | T_RMDIR T_ARG {
-	   					char string[100], stringfinal[1000] = "/bin/rmdir ";
-	   					strcat(stringfinal, $2);
-	   					$$ = system(stringfinal);
+	   					 char stringfinal[1000] = "/bin/rmdir ";
+	   					 strcat(stringfinal, $2);
+	   					 system(stringfinal);
 	   				   }
 	   | T_CD T_FOLDERARG {
 						   	int ret = chdir($2);
@@ -101,18 +113,45 @@ comando: T_LS { $$ = system("/bin/ls"); }
 						}
 					}
 		| T_TOUCH T_ARCARG {
-							char string[100], stringfinal[1000] = "/bin/touch ";
+							char stringfinal[1000] = "/bin/touch ";
 							strcat(stringfinal, $2);
-							$$ = system(stringfinal);
+							system(stringfinal);
 						   }
 		| T_TOUCH T_ARG {
-							char string[100], stringfinal[1000] = "/bin/touch ";
+							char stringfinal[1000] = "/bin/touch ";
 							strcat(stringfinal, $2);
-							$$ = system(stringfinal);
+							system(stringfinal);
 						}
-		| T_IFCONFIG {
-						system("ifconfig");
-					 }
+		| T_IFCONFIG { system("ifconfig"); }
+		| T_START T_ARG { 
+							int status;
+							if(fork() == 0){
+								status = system($2);
+								exit(0);
+							} 
+						}
+;
+
+calcfloat: T_NUMF                  { $$ = $1; }
+	  | calcfloat T_SOMA calcfloat { $$ = $1 + $3; }
+	  | calcfloat T_SUBT calcfloat { $$ = $1 - $3; }
+	  | calcfloat T_MULT calcfloat { $$ = $1 * $3; }
+	  | calcfloat T_DIV calcfloat  { $$ = $1 / $3; }
+	  | calcint T_SOMA calcfloat   { $$ = $1 + $3; }
+	  | calcint T_SUBT calcfloat   { $$ = $1 - $3; }
+	  | calcint T_MULT calcfloat   { $$ = $1 * $3; }
+	  | calcint T_DIV calcfloat	   { $$ = $1 / $3; }
+	  | calcfloat T_SOMA calcint   { $$ = $1 + $3; }
+	  | calcfloat T_SUBT calcint   { $$ = $1 - $3; }
+	  | calcfloat T_MULT calcint   { $$ = $1 * $3; }
+	  | calcfloat T_DIV calcint	   { $$ = $1 / $3; }
+	  | calcint T_DIV calcint	   { $$ = $1 / (float)$3; }
+;
+
+calcint: T_NUM				    { $$ = $1; }
+	  | calcint T_SOMA calcint	{ $$ = $1 + $3; }
+	  | calcint T_SUBT calcint	{ $$ = $1 - $3; }
+	  | calcint T_MULT calcint	{ $$ = $1 * $3; }
 ;
 
 %%
@@ -120,12 +159,7 @@ comando: T_LS { $$ = system("/bin/ls"); }
 int main() {
 	yyin = stdin;
 	
-	char completo[4096] = "myShell:";
-	char path[2048];
-	getcwd(path, sizeof(path));
-	strcat(completo,path);
-	strcat(completo,">> ");
-	printf("%s",completo);
+	printLinha();
 
 	do { 
 		yyparse();
@@ -135,6 +169,5 @@ int main() {
 }
 
 void yyerror(const char* s) {
-	fprintf(stderr, "Parse error: %s\n", s);
+	fprintf(stderr, "Comando/Argumento nao valido. Erro: %s\n", s);
 }
-
