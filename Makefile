@@ -1,6 +1,6 @@
 all: shell
 
-shell.tab.c shell.tab.h:	shell.y
+shell.tab.c shell.tab.h: shell.y
 	bison -d shell.y
 
 lex.yy.c: shell.lex shell.tab.h

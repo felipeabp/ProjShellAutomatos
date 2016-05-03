@@ -32,7 +32,6 @@ void printLinha(){
 %token <pfloat> T_NUMF
 %token <integer> T_NUM
 %token <stringp> T_ARG
-%token <stringp> T_ARCARG
 %token <stringp> T_FOLDERARG
 %token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD T_TOUCH T_IFCONFIG T_START
 
@@ -47,20 +46,18 @@ void printLinha(){
 
 %%
 
-inicio: 
-	   | inicio line 
+inicio: { printLinha(); }
+	   | inicio line { printLinha(); }
 ;
 
-line: T_NEWLINE { printLinha(); }
-    | comando T_NEWLINE  { printLinha(); }
+line: T_NEWLINE 
+    | comando T_NEWLINE  
     | calcint T_NEWLINE { 	
     						printf("Resultado: %i\n", $1);
-    						printLinha();
     					}
     | calcfloat T_NEWLINE { 
     						printf("Resultado: %f\n", $1);
-							printLinha();
-    					  }
+						  }
     | T_QUIT T_NEWLINE { printf("Fim!\n"); exit(0); }
 ;
 
@@ -107,29 +104,26 @@ comando: T_LS { system("/bin/ls"); }
 	   					getcwd(path, sizeof(path));
 	   					strcat(path, "/");
 	   					strcat(path, $2);
+	   					printf("CD do arg");
 						ret = chdir(path);
 						if(ret != 0){
 							printf("Erro! Diretorio nao encontrado!\n");
 						}
 					}
-		| T_TOUCH T_ARCARG {
-							char stringfinal[1000] = "/bin/touch ";
-							strcat(stringfinal, $2);
-							system(stringfinal);
-						   }
 		| T_TOUCH T_ARG {
-							char stringfinal[1000] = "/bin/touch ";
-							strcat(stringfinal, $2);
-							system(stringfinal);
+						  char stringfinal[1000] = "/bin/touch ";
+						  strcat(stringfinal, $2);
+						  system(stringfinal);
 						}
 		| T_IFCONFIG { system("ifconfig"); }
 		| T_START T_ARG { 
-							int status;
 							if(fork() == 0){
-								status = system($2);
+								system($2);
 								exit(0);
 							} 
 						}
+		| T_ARG { yyerror("Arg found"); }
+		| T_FOLDERARG { yyerror("Arg found"); }
 ;
 
 calcfloat: T_NUMF                  { $$ = $1; }
@@ -158,8 +152,6 @@ calcint: T_NUM				    { $$ = $1; }
 
 int main() {
 	yyin = stdin;
-	
-	printLinha();
 
 	do { 
 		yyparse();
