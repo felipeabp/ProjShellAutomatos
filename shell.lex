@@ -27,7 +27,6 @@
 "/"			{return T_DIV;}
 [0-9]+		{yylval.integer = atoi(yytext); return T_NUM;}
 [0-9]+\.[0-9]+ 	{yylval.pfloat = atof(yytext); return T_NUMF;}
-[a-zA-Z0-9/.~]+ 	{yylval.stringp = yytext; return T_FOLDERARG; }
-[a-zA-Z0-9./\()_-]+[.]?[a-zA-Z0-9]* {yylval.stringp = yytext; return T_ARG; }
+[a-zA-Z0-9.\/()_-]+[.]?[a-zA-Z0-9]* {yylval.stringp = yytext; return T_ARG; }
 
 %%

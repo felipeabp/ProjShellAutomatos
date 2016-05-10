@@ -32,11 +32,11 @@ void printLinha(){
 %token <pfloat> T_NUMF
 %token <integer> T_NUM
 %token <stringp> T_ARG
-%token <stringp> T_FOLDERARG
 %token T_PS T_INVALIDO T_KILL T_LS T_MKDIR T_RMDIR T_NEWLINE T_QUIT T_CD T_TOUCH T_IFCONFIG T_START
 
-%token T_SOMA T_SUBT T_MULT T_DIV
-%left T_SOMA T_SUBT T_MULT T_DIV
+%token T_SOMA T_SUBT T_MULT T_DIV T_PESQ T_PDIR
+%left T_SOMA T_SUBT 
+%left T_MULT T_DIV
 
 %type<string> comando
 %type<integer> calcint
@@ -92,20 +92,23 @@ comando: T_LS { system("/bin/ls"); }
 	   					 strcat(stringfinal, $2);
 	   					 system(stringfinal);
 	   				   }
-	   | T_CD T_FOLDERARG {
-						   	int ret = chdir($2);
-						   	if(ret != 0){
-						   		printf("Erro! Diretorio nao encontrado!\n");
-						   	}
-						  }
+
 	   | T_CD T_ARG {		
 	   					int ret;
-	   					char path[2048];
-	   					getcwd(path, sizeof(path));
-	   					strcat(path, "/");
-	   					strcat(path, $2);
-	   					printf("CD do arg");
-						ret = chdir(path);
+	   					if(strcmp($2, "..") == 0){
+	   						ret = chdir($2);
+	   					}
+	   					else if(strchr($2,'/')!= NULL){
+	   						ret = chdir($2);
+	   					}
+	   					else {
+		   					char path[2048];
+		   					getcwd(path, sizeof(path));
+		   					strcat(path, "/");
+		   					strcat(path, $2);
+							ret = chdir(path);
+	   					}
+	   					
 						if(ret != 0){
 							printf("Erro! Diretorio nao encontrado!\n");
 						}
@@ -123,7 +126,6 @@ comando: T_LS { system("/bin/ls"); }
 							} 
 						}
 		| T_ARG { yyerror("Arg found"); }
-		| T_FOLDERARG { yyerror("Arg found"); }
 ;
 
 calcfloat: T_NUMF                  { $$ = $1; }
